@@ -1,0 +1,66 @@
+name: Windows build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  win:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: [
+          { msystem: MINGW64, arch: x86_64 }
+        ]
+    name: ${{ matrix.msystem}} · ${{ matrix.arch }}
+    defaults:
+      run:
+        shell: msys2 {0}
+    env:
+      MINGW_ARCH: ${{ matrix.msystem }}
+    steps:
+
+    - run: git config --global core.autocrlf input
+      shell: bash
+
+    - uses: actions/checkout@v4
+
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{ matrix.msystem }}
+        update: true
+        install: >
+          git
+          base-devel
+          gperf
+          python-pip
+          mingw-w64-${{ matrix.arch }}-toolchain
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '>=3.5'
+
+    - name: Build and check
+      run: |
+        cd msys2
+        makepkg-mingw --noconfirm --noprogressbar -sCLf
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.msystem }}-${{ matrix.arch }}
+        path: msys2/*.zst
+
+    - name: Install
+      run: |
+        pacman -U --noconfirm msys2/*.zst
+        which vvp
+        cygpath -w `which vvp`
+        ldd `which vvp`
+
+    - name: Copy in CMD
+      shell: cmd
+      run: |
+        copy D:\a\_temp\msys64\mingw64\lib\libvvp.dll D:\a\_temp\msys64\mingw64\bin
+    - name: Test
+      run: |
+        ./.github/test.sh
