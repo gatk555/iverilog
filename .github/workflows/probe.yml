@@ -1,0 +1,46 @@
+name: Probe
+on:
+  workflow_dispatch:
+jobs:
+  win:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: [
+          { msystem: MINGW64, arch: x86_64 }
+        ]
+    name: ${{ matrix.msystem}} · ${{ matrix.arch }}
+    defaults:
+      run:
+        shell: msys2 {0}
+    env:
+      MINGW_ARCH: ${{ matrix.msystem }}
+    steps:
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{ matrix.msystem }}
+        update: true
+        install: >
+          mingw-w64-${{ matrix.arch }}-toolchain
+    - uses: dawidd6/action-download-artifact@v3
+      with:
+       workflow: test.yml
+       workflow_conclusion: ""
+       run_number: 1
+       name: MINGW64-x86_64
+       path: .
+    - name: Install
+      run: |
+        pacman -U -v --noconfirm *.zst
+    - name: Copy in CMD
+      shell: cmd
+      run: |
+        cp D:\a\_temp\msys64\mingw64\lib\libvvp.dll D:\a\_temp\msys64\mingw64\bin
+        gendef D:\a\_temp\msys64\mingw64\lib\libvvp.dll
+    - uses: actions/upload-artifact@v4
+      with:
+        name: libvvp.def
+        path: libvvp.def
+
+

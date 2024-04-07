@@ -2,10 +2,7 @@
 name: Deploy documentation
 
 on:
-  # Every push onto the main branch regerenates the documentation
-  push:
-    branches:
-      - 'master'
+  workflow_dispatch:
 
 jobs:
 
@@ -14,7 +11,7 @@ jobs:
     name: 'Build documentation on Linux'
     steps:
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Install dependencies
       run: |
