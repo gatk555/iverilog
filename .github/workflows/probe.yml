@@ -25,9 +25,9 @@ jobs:
           mingw-w64-${{ matrix.arch }}-toolchain
     - uses: dawidd6/action-download-artifact@v3
       with:
-       workflow: test.yml
+       workflow: win.yml
        workflow_conclusion: ""
-       run_number: 1
+       run_number: 2
        name: MINGW64-x86_64
        path: .
     - name: Install
