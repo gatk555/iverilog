@@ -1,0 +1,54 @@
+name: Build master for Macos with --enable-libvvp.
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  mac:
+    strategy:
+      fail-fast: false
+    runs-on: macos-latest
+    name: 'macOS'
+    steps:
+
+    - uses: actions/checkout@v4
+      with:
+        ref: master
+
+    - name: Install dependencies
+      run: |
+        brew install bison
+        pip3 install docopt
+
+    - name: Build, check and install
+      run: |
+        export PATH="/usr/local/opt/bison/bin:$PATH"
+        autoconf
+        ./configure --enable-libvvp
+        make -j$(nproc)
+        sudo make install
+        make check
+
+    - name: Isolate
+      run: |
+        mkdir local
+        mkdir local/bin
+        cp /usr/local/bin/iverilog local/bin
+        cp /usr/local/bin/iverilog-vpi local/bin
+        cp /usr/local/bin/vvp local/bin
+        mkdir local/include
+        cp -r /usr/local/include/iverilog local/include/iverilog
+        mkdir local/lib
+        cp /usr/local/lib/libveriuser.a local/lib
+        cp /usr/local/lib/libvpi.a local/lib
+        cp /usr/local/lib/libvvp.so local/lib
+        cp -r /usr/local/lib/ivl local/lib/ivl
+        mkdir -p local/share/man/man1
+        cp /usr/local/share/man/man1/iverilog.1 local/share/man/man1
+        cp /usr/local/share/man/man1/iverilog-vpi.1 local/share/man/man1
+        cp /usr/local/share/man/man1/vvp.1 local/share/man/man1
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Icarus Verilog with libvvp, Mac OS
+        path: local
